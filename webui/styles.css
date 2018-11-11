@@ -1,0 +1,238 @@
+/* CSS RESET: https://meyerweb.com/eric/tools/css/reset/ */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+
+body {
+	line-height: 1;
+}
+
+ol, ul {
+	list-style: none;
+}
+
+blockquote, q {
+	quotes: none;
+}
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+/* CSS RESET END */
+
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+
+#ROOT {
+  font-family: 'Roboto', sans-serif;
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+#header {
+	background: #559;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	color: white;
+  flex: 0;
+}
+
+#header h1 {
+	justify-self: flex-end;
+	order: 3;
+	text-align: right;
+	flex: 1;
+	font-size: 13px;
+}
+
+#content, #header {
+	padding: 0 10px;
+}
+
+#content {
+  flex: 1;
+	padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#sections {
+	display:  flex;
+	flex-direction:  row;
+	align-items: center;
+}
+
+#sections li {
+	padding: 10px 10px;
+	background: #337;
+	margin-top: 10px;
+	min-width: 80px;
+	text-align: center;
+	cursor: pointer;
+	color: #ddf;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#sections li:hover {
+	background: #335;
+	color: #fff;
+}
+
+#sections li.active {
+  background: white;
+	color: black;
+  cursor: auto;
+}
+
+#sections li:first-of-type {
+	border-radius: 10px 0 0 0;
+}
+
+#sections li:last-of-type {
+	border-radius: 0 10px 0 0;
+}
+
+#log_section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+#log_section .events {
+  margin: 10px 0;
+  border: 2px solid #e8e8e8;
+  padding-top: 1.875em;
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#log_section .events table {
+  width: 100%;
+	display: block;
+  position: absolute;
+  top: 0px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  table-layout: fixed;
+}
+
+#log_section .events thead {
+	line-height: 1.8em;
+  font-weight: bold;
+}
+
+#log_section .events tbody {
+	line-height: 1.2em;
+}
+
+#log_section .events th {
+	padding: 0 5px;
+  background: #bdbde9;
+	color: white;
+}
+
+#log_section th.level { background: #5066d4; }
+#log_section th.msg   { width: 50%; }
+#log_section th.props { width: 50%; }
+
+#log_section .events tr:nth-child(even) {
+	background: #eef;
+}
+
+#log_section .events td {
+  padding: 5px;
+}
+
+#log_section td.level {
+  text-align: center;
+  font-size: 10px;
+}
+
+#log_section td {
+  font-size: 12px;
+}
+
+#log_section tr.TRC td.level {
+  background: #50fa16;
+  color: black;
+}
+
+#log_section tr.DBG td.level {
+  background: #21aa4c;
+  color: white;
+}
+
+#log_section tr.INF td.level {
+  background: green;
+  color: white;
+}
+
+#log_section tr.NOT td.level {
+  background: #f1f205;
+  color: #251c1c;
+}
+
+#log_section tr.WRN td.level {
+  background: #fea20d;
+  color: #742222;
+}
+
+#log_section tr.ERR td.level {
+  background: #d10707;
+  color: white;
+}
+
+#log_section tr.FAT td.level {
+  background: #0d0c0c;
+  color: white;
+}
+
+#log_section td.msg {
+  font-weight: 600;
+}
+

@@ -1,0 +1,1 @@
+: karax_app.nim |> nim --hotCodeReloading:on -d:createChroniclesTail -o:%o js %f |> %B.js
