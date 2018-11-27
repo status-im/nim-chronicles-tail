@@ -1,12 +1,19 @@
 import
-  macros, json, random, times, strutils,
+  macros, json, random, times, strutils, os,
   asynchttpserver, asyncnet, asyncdispatch, websocket,
   chronicles_tail/configuration
 
 const
   indexFile = staticRead "karax_app.html"
   faviconBytes = staticRead "favicon.png"
-  styles = staticRead "styles.css"
+
+template fileContents(file: string): string =
+  when defined(debug):
+    readFile("webui" / file)
+  else:
+    const contents = staticRead(file)
+    contents
+
 
 type
   WebuiServer* = ref object
@@ -45,7 +52,7 @@ proc serve*(s: WebuiServer): Future[void] =
 
         var nextLineToSend = 0
         while nextLineToSend < s.logLines.len:
-          await ws.sendText(s.logLines[nextLineToSend])
+          await ws.sendText(s.logLines[nextLineToSend], maskingKey = "")
           inc nextLineToSend
 
         s.clients.add ws
@@ -54,8 +61,12 @@ proc serve*(s: WebuiServer): Future[void] =
       await req.respond(Http200, indexFile)
 
     of "/styles.css":
-     await req.respond(Http200, styles,
+     await req.respond(Http200, fileContents("styles.css"),
                       newHttpHeaders({"Content-Type": "text/css"}))
+
+    of "/eth_p2p_plugin.js":
+      await req.respond(Http200, readFile("webui/eth_p2p_plugin.js"),
+                        newHttpHeaders({"Content-Type": "application/javascript"}))
 
     of "/karax_app.js":
       var scripts = newStringOfCap(16000)
@@ -69,8 +80,8 @@ proc serve*(s: WebuiServer): Future[void] =
 
       scripts.add compileJs("karax_app.nim", "-d:createChroniclesTail")
 
-      for plugin in s.plugins:
-        scripts.add plugin
+      # for plugin in s.plugins:
+      #  scripts.add plugin
 
       await req.respond(Http200, scripts,
                         newHttpHeaders({"Content-Type": "application/javascript"}))

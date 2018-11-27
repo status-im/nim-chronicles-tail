@@ -1,1 +1,2 @@
 : karax_app.nim |> nim --hotCodeReloading:on -d:createChroniclesTail -o:%o js %f |> %B.js
+: eth_p2p_plugin.nim |> nim --hotCodeReloading:on -o:%o js %f |> %B.js

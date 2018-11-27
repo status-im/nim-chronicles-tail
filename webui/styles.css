@@ -71,15 +71,16 @@ table {
 	flex-direction: row;
 	align-items: center;
 	color: white;
-  flex: 0;
+  flex: 0 auto;
+  font-size: 16px;
 }
 
 #header h1 {
 	justify-self: flex-end;
 	order: 3;
 	text-align: right;
-	flex: 1;
-	font-size: 13px;
+	flex: 1 auto;
+	font-size: 15px;
 }
 
 #content, #header {
@@ -87,14 +88,14 @@ table {
 }
 
 #content {
-  flex: 1;
+  flex: 1 auto;
 	padding-top: 10px;
   display: flex;
   flex-direction: column;
 }
 
 #sections {
-	display:  flex;
+	display: flex;
 	flex-direction:  row;
 	align-items: center;
 }
@@ -136,7 +137,7 @@ table {
 #log_section {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 auto;
 }
 
 #log_section .events {
@@ -144,7 +145,7 @@ table {
   border: 2px solid #e8e8e8;
   padding-top: 1.875em;
   position: relative;
-  flex: 1;
+  flex: 1 auto;
   display: flex;
   flex-direction: column;
 }

@@ -3,7 +3,7 @@ include
 
 import
   jsconsole, jscore, jsffi, jswebsockets,
-  tail_jsplugins
+  chronicles_tail/jsplugins
 
 type
   ChroniclesPrompt = object
@@ -11,13 +11,11 @@ type
     suggestions: seq[string]
     activeSuggestionIdx: int
 
-  LogEvent = js
-
 var
   chroniclesCredentials* {.importc, nodecl.}: js
   chroniclesPrompt: ChroniclesPrompt
   activeSectionIdx = 0
-  logEvents = newSeq[LogEvent]()
+  logEvents = newSeq[TailEvent]()
 
 proc activeOrInactive(idx, currentActiveIdx: int): cstring =
   if idx == currentActiveIdx: "active"
@@ -48,14 +46,12 @@ proc logSectionContent: VNode =
 
         tbody:
           for event in logEvents:
-            let level = cast[cstring](event.level)
+            let level = event.level
             tr(class = level):
               td(class = "level"): text level
-              td(class = "ts")   : text cast[cstring](event.ts)
-              td(class = "msg")  : text cast[cstring](event.msg)
-              td(class = "props"): text cast[cstring](event.x)
-
-addSection("Log", logSectionContent)
+              td(class = "ts")   : text event.ts
+              td(class = "msg")  : text event.msg
+              td(class = "props"): text event.data.asHtml
 
 var chroniclesSocket = newWebSocket(cast[cstring](chroniclesCredentials.url))
 
@@ -63,8 +59,13 @@ chroniclesSocket.onOpen = proc (e: jswebsockets.Event) =
   chroniclesSocket.send(cast[cstring](chroniclesCredentials.accessToken))
 
 chroniclesSocket.onMessage = proc (e: MessageEvent) =
-  var msg = JSON.parse(e.data).js
-  if msg.level == jsundefined:
+  var msg = cast[TailEvent](JSON.parse(e.data))
+
+  for f in filters:
+    if f(msg):
+      return
+
+  if msg.level.toJs == jsundefined:
     console.log msg
     return
 
@@ -100,4 +101,5 @@ proc pageContent(): VNode =
       activeSection()
 
 setRenderer pageContent
+addSection "Log", logSectionContent
 
