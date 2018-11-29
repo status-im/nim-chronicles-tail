@@ -3,7 +3,7 @@ include
 
 import
   jsconsole, jscore, jsffi, jswebsockets,
-  chronicles_tail/jsplugins
+  ../chronicles_tail/jsplugins
 
 type
   ChroniclesPrompt = object

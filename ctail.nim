@@ -132,8 +132,8 @@ if program.len == 0:
   quit 1
 
 proc parseFilter*(s: string): SqlNode =
-  let sqlNodes = parseSql("SELECT * FROM DUMMY WHERE " & s & ";")
-  let whereClause = sqlNodes[0][^1]
+  let selectStmt = parseSql("SELECT * FROM DUMMY WHERE " & s & ";")[0]
+  let whereClause = selectStmt[selectStmt.len - 1]
   assert whereClause.kind == nkWhere and whereClause.len == 1
   return whereClause[0]
 

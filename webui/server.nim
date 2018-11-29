@@ -1,7 +1,7 @@
 import
   macros, json, random, times, strutils, os,
   asynchttpserver, asyncnet, asyncdispatch, websocket,
-  chronicles_tail/configuration
+  ../chronicles_tail/configuration
 
 const
   indexFile = staticRead "karax_app.html"
@@ -13,7 +13,6 @@ template fileContents(file: string): string =
   else:
     const contents = staticRead(file)
     contents
-
 
 type
   WebuiServer* = ref object
