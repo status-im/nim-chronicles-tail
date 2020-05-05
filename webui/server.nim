@@ -40,7 +40,7 @@ proc serve*(s: WebuiServer): Future[void] =
       let (ws, error) = await verifyWebsocketRequest(req)
       if ws.isNil:
         echo "WS negotiation failed: ", error
-        await req.respond(Http400, "Websocket negotiation failed: " & error)
+        await req.respond(Http400, "Websocket negotiation failed: " & $error)
         req.client.close()
       else:
         var userCredentials = await ws.readData()
@@ -103,4 +103,3 @@ proc broadcastLine*(s: WebuiServer, jsonLine: string) =
         let pos = s.clients.find(ws)
         if pos != -1: s.clients.delete(pos)
         asyncCheck ws.close()
-
