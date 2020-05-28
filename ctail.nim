@@ -59,10 +59,10 @@ template jsKind(value): JsonNodeKind =
   elif value is int: JInt
   else: {.error: "Add another type here".}
 
-proc createTopicState(name: string): ptr Topic =
+proc createTopicState(name: string): ptr TopicSettings =
   result = getTopicState(name)
   if result == nil:
-    return registerTopic(name, create(Topic))
+    return registerTopic(name, create(TopicSettings))
 
 for kind, key, val in optParser.getopt():
   case kind
@@ -115,7 +115,7 @@ Usage:
 
   --webui                       starts the Web UI
 
-  Topic filtering options:
+  TopicSettings filtering options:
 
   --enabled_topics:"topics"
   --disabled_topics:"topics"
