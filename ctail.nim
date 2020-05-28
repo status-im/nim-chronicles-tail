@@ -457,7 +457,6 @@ system.addQuitProc(quitProc)
 proc processTailingThread(process: Process) =
   for line in outputStream(process).lines:
     var line = line & " L"
-    print("GOT OUTPUT " & line)
     postToMainLoop line
 
 spawn processTailingThread(process)
