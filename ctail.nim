@@ -1,7 +1,8 @@
 import
   tables, macros, parseopt, strutils, sequtils, unicode, algorithm, json,
-  re, terminal, os, osproc, streams, threadpool, parsesql, asyncdispatch,
-  browsers, prompt, chronicles, chronicles/topics_registry,
+  re, terminal, os, streams, threadpool, parsesql, asyncdispatch, browsers,
+  asynctools/asyncproc, faststreams/asynctools_adapters, faststreams/textio,
+  prompt, chronicles, chronicles/topics_registry,
   pipes, webui/server
 
 type
@@ -49,10 +50,6 @@ var
   activeGrep = ""
   activeTopics = ""
   webuiPort = -1
-
-template postToMainLoop(msg: string) =
-  {.gcsafe.}:
-    mainLoopPipe.writePipeFrame(msg)
 
 template jsKind(value): JsonNodeKind =
   when value is string: JString
@@ -446,20 +443,13 @@ proc handleCommand(line: string) =
         let s = setTopicState(topic, Required)
         assert s
 
-var process = startProcess(command = program & " " & commandLine,
-                           workingDir = getCurrentDir(),
-                           options = {poUsePath, poEvalCommand})
+var tailedPrograms: seq[AsyncProcess]
 
-proc quitProc(){.noconv.} = terminate(process)
+proc quitProc(){.noconv.} =
+  for p in tailedPrograms:
+    terminate(p)
+
 system.addQuitProc(quitProc)
-
-# Transform json input into TextBlockRecord/TextLineRecord or JsonRecord
-proc processTailingThread(process: Process) =
-  for line in outputStream(process).lines:
-    var line = line & " L"
-    postToMainLoop line
-
-spawn processTailingThread(process)
 
 proc checkType(j: JsonNode, key: string, kind: JsonNodeKind): bool =
   j.hasKey(key) and j[key].kind == kind
@@ -480,8 +470,8 @@ proc inputThread =
   try:
     while true:
       var line = pAddr[].readLine()
-      line.add " C"
-      postToMainLoop line
+      {.gcsafe.}:
+        mainLoopPipe.writePipeFrame(line)
   except:
     let ex = getCurrentException()
     # print ex.getStackTrace
@@ -489,6 +479,12 @@ proc inputThread =
     quit 1
 
 spawn inputThread()
+
+proc handleCommandsLoop {.async.} =
+  while true:
+    var cmd = await mainLoopPipe.readPipeFrame()
+    handleCommand cmd
+    setStatus()
 
 proc extractAttr[T](j: JsonNode, key: string, default: T): T =
   if j.hasKey(key):
@@ -503,60 +499,65 @@ proc extractAttr[T](j: JsonNode, key: string, default: T): T =
 
   return default
 
+proc programTailingLoop(server: WebuiServer,
+                        program, commandLine: string) {.async.} =
+  var process = try:
+    startProcess(command = program & " " & commandLine,
+                 workingDir = getCurrentDir(),
+                 options = {poUsePath, poEvalCommand})
+  except CatchableError as err:
+    echo "Failed to start process"
+    echo err.msg
+    quit 1
 
-proc mainLoop {.async.} =
+  let input = asyncPipeInput(process.outputHandle)
+  while input.readable:
+    let logLine = await input.readLine()
+
+    if matchRE(logLine, regex):
+      var j = try: parseJson(logLine)
+              except CatchableError:
+                print(logLine)
+                continue
+
+      if not (j.kind == JObject):
+        print(logLine)
+        continue
+
+      let msg = j.extractAttr("msg", "")
+      if msg == "$chronicles":
+        if j.checkType("cmd", JString):
+          case j["cmd"].str
+          of "loadPlugin":
+            if server != nil and j.checkType("pluginSrc", JString):
+              server.plugins.add j["pluginSrc"].str
+          else:
+            discard
+        continue
+
+      if server != nil:
+        server.broadcastLine(logLine)
+
+      var
+        level = parseLogLevel j.extractAttr("level", "")
+        topics = j.extractAttr("topics", "")
+        topicStates = map(topics.split(Whitespace + {',', ';'}), createTopicState)
+
+      discard j.extractAttr("ts", "")
+
+      if topicsMatch(level, topicStates) and matches(filter, j, false):
+        activeRecordPrinter(level, msg, topics, j)
+
+proc main {.async.} =
   var server: WebuiServer
   if webuiPort != -1:
     server = newServer(webuiPort)
     asyncCheck server.serve()
     # openDefaultBrowser("http://localhost:" & $webuiPort)
 
-  while true:
-    var logLine = await mainLoopPipe.readPipeFrame()
-    let msgType = logLine[^1]
-    logLine.setLen(logLine.len - 2)
+  asyncCheck handleCommandsLoop()
 
-    case msgType
-    of 'C':
-      handleCommand(logLine)
-      setStatus()
-    of 'L':
-      if matchRE(logLine, regex):
-        var j: JsonNode
-        try:
-          j = parseJson(logLine)
-        except:
-          print(logLine)
-          continue
+  await programTailingLoop(server, program, commandLine)
 
-        if not (j.kind == JObject):
-          print(logLine)
-          continue
+waitFor main()
 
-        let msg = j.extractAttr("msg", "")
-        if msg == "$chronicles":
-          if j.checkType("cmd", JString):
-            case j["cmd"].str
-            of "loadPlugin":
-              if server != nil and j.checkType("pluginSrc", JString):
-                server.plugins.add j["pluginSrc"].str
-            else:
-              discard
-          continue
-
-        if server != nil:
-          server.broadcastLine(logLine)
-
-        var
-          level = parseLogLevel j.extractAttr("level", "")
-          topics = j.extractAttr("topics", "")
-          topicStates = map(topics.split(Whitespace + {',', ';'}), createTopicState)
-
-        discard j.extractAttr("ts", "")
-
-        if topicsMatch(level, topicStates) and matches(filter, j, false):
-          activeRecordPrinter(level, msg, topics, j)
-    else:
-      discard
-
-waitFor mainLoop()

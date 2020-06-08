@@ -1,5 +1,5 @@
 import
-  os, asyncdispatch, asynctools/asyncpipe, ranges/ptr_arith
+  os, asyncdispatch, asynctools/asyncpipe
 
 export
   asyncpipe
@@ -20,8 +20,9 @@ else:
 
 proc writePipeFrame*(p: AsyncPipe, data: string) =
   var dataLen = data.len
-  p.writeToPipe(addr(dataLen), sizeof(dataLen))
-  p.writeToPipe(data.baseAddr, data.len)
+  if dataLen > 0:
+    p.writeToPipe(addr(dataLen), sizeof(dataLen))
+    p.writeToPipe(unsafeAddr data[0], data.len)
 
 proc readPipeFrame*(p: AsyncPipe): Future[string] {.async.} =
   var frameSize: int
@@ -31,7 +32,7 @@ proc readPipeFrame*(p: AsyncPipe): Future[string] {.async.} =
 
   result = newString(frameSize)
 
-  bytesRead = await p.readInto(result.baseAddr, frameSize)
+  bytesRead = await p.readInto(addr result[0], frameSize)
   if bytesRead != frameSize:
     raiseOsError(osLastError())
 
