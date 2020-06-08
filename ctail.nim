@@ -539,7 +539,7 @@ proc programTailingLoop(server: WebuiServer,
         server.broadcastLine(logLine)
 
       var
-        level = parseLogLevel j.extractAttr("level", "")
+        level = parseLogLevel j.extractAttr("lvl", "")
         topics = j.extractAttr("topics", "")
         topicStates = map(topics.split(Whitespace + {',', ';'}), createTopicState)
 
