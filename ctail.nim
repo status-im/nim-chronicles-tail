@@ -1,20 +1,12 @@
 import
   tables, macros, parseopt, strutils, sequtils, unicode, algorithm, json,
-  re, terminal, os, streams, threadpool, parsesql, asyncdispatch, browsers,
+  re, terminal, os, threadpool, parsesql, asyncdispatch,
   asynctools/asyncproc, faststreams/asynctools_adapters, faststreams/textio,
   prompt, chronicles, chronicles/topics_registry,
   pipes, webui/server
 
 type
-  SyntaxError = object of Exception
-
-  Messagekind = enum
-    Cmd,
-    Log
-
-  Message = object
-    content: string
-    kind: Messagekind
+  SyntaxError = object of CatchableError
 
   Command = enum
     cmdClearFilter,
@@ -43,18 +35,12 @@ var
   mainLoopPipe = createPipe(register = true)
   filter: SqlNode
   regex = re("")
-  recordFormat = ""
   jTest = %*{"msg": "foo", "level": "dbg", "ts": 3.14, "topics": "bar", "thread": 0}
   activeRecordPrinter: RecordPrinter = printTextLine
   activeFilter = ""
   activeGrep = ""
   activeTopics = ""
   webuiPort = -1
-
-template jsKind(value): JsonNodeKind =
-  when value is string: JString
-  elif value is int: JInt
-  else: {.error: "Add another type here".}
 
 proc createTopicState(name: string): ptr TopicSettings =
   result = getTopicState(name)
@@ -474,8 +460,7 @@ proc inputThread =
         mainLoopPipe.writePipeFrame(line)
   except:
     let ex = getCurrentException()
-    # print ex.getStackTrace
-    # print ex.msg
+    print ex.msg
     quit 1
 
 spawn inputThread()

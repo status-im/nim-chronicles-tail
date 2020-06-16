@@ -1,5 +1,5 @@
 import
-  macros, json, random, times, strutils, os,
+  macros, random, strutils, os,
   asynchttpserver, asyncnet, asyncdispatch, websocket,
   ../chronicles_tail/configuration
 
